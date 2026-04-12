@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strings"
 	"time"
 )
@@ -31,21 +32,23 @@ const (
 )
 
 type ColorLog struct {
-	errW io.Writer
-	outW io.Writer
-	cfg  *Config
-	date time.Time
+	errW  io.Writer
+	outW  io.Writer
+	cfg   *Config
+	date  time.Time
+	masks []string
 }
 
 // Config - Ascii коды для установки соответствующих элементов лога
 type Config struct {
-	Date  string
-	Time  string
-	Fatal string
-	Error string
-	Warn  string
-	Info  string
-	Debug string
+	Date           string
+	Time           string
+	Fatal          string
+	Error          string
+	Warn           string
+	Info           string
+	Debug          string
+	DoubleLogInStd bool
 }
 
 var (
@@ -67,7 +70,6 @@ var (
 		Info:  TextGreen,
 		Debug: TextGray,
 	}
-	defaultLog = New()
 )
 
 func New() *ColorLog {
@@ -132,20 +134,24 @@ func (c *ColorLog) l(isOut bool, text string, styles ...string) {
 		sb.WriteString(style)
 	}
 	sb.WriteString(" ")
-	sb.WriteString(text)
+	sb.WriteString(c.maskLog(text))
 	sb.WriteString(TextReset)
 	sb.WriteString("\n")
 	s := sb.String()
 	if isOut {
-		_, err := c.outW.Write([]byte(s))
-		if err != nil {
-			println(err.Error())
-		}
+		c.write(c.outW, s, os.Stdout)
 	} else {
-		_, err := c.errW.Write([]byte(s))
-		if err != nil {
-			println(err.Error())
-		}
+		c.write(c.errW, s, os.Stderr)
+	}
+}
+
+func (c *ColorLog) write(iow io.Writer, text string, dblW io.Writer) {
+	_, err := iow.Write([]byte(text))
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Error to write log: %v\n", err)
+	}
+	if c.cfg.DoubleLogInStd && iow != dblW {
+		_, _ = dblW.Write([]byte(text))
 	}
 }
 
@@ -173,30 +179,29 @@ func Fatal(text string, args ...any) {
 	defaultLog.Fatal(text, args...)
 }
 
-func Error(text string, args ...any) {
-	defaultLog.Error(text, args...)
+func (c *ColorLog) WithMask(mask string) *ColorLog {
+	c.masks = append(c.masks, mask)
+	sort.Slice(c.masks, func(i, j int) bool {
+		return len(c.masks[i]) > len(c.masks[j])
+	})
+	return c
 }
 
-func Warn(text string, args ...any) {
-	defaultLog.Warn(text, args...)
+func (c *ColorLog) maskLog(text string) string {
+	for _, mask := range c.masks {
+		text = strings.ReplaceAll(text, mask, maskSymbols(len(mask)))
+	}
+	return text
 }
 
-func Info(text string, args ...any) {
-	defaultLog.Info(text, args...)
-}
+var ms = []string{"", "*", "**", "***", "****", "**...**"}
 
-func Debug(text string, args ...any) {
-	defaultLog.Debug(text, args...)
-}
-
-func WithConfig(cfg *Config) {
-	defaultLog.WithConfig(cfg)
-}
-
-func WithErr(iow io.Writer) {
-	defaultLog.WithErr(iow)
-}
-
-func WithOut(iow io.Writer) {
-	defaultLog.WithOut(iow)
+func maskSymbols(n int) string {
+	if n < 0 {
+		return ""
+	}
+	if n >= len(ms) {
+		return ms[len(ms)-1]
+	}
+	return ms[n]
 }
