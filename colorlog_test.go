@@ -2,6 +2,7 @@ package colorlog_test
 
 import (
 	"errors"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -13,6 +14,11 @@ import (
 type testWriter struct {
 	sb strings.Builder
 }
+
+var (
+	regDate = regexp.MustCompile(`\d{4}-\d\d-\d\d`)
+	regTime = regexp.MustCompile(`\d\d:\d\d:\d\d`)
+)
 
 func (t *testWriter) Write(p []byte) (n int, err error) {
 	if t == nil {
@@ -78,9 +84,9 @@ func Test_Mask(t *testing.T) {
 				for _, mask := range test.masks {
 					l.WithMask(mask)
 				}
-				for _, logF := range []func(string, ...any){l.Fatal, l.Error, l.Info, l.Warn, l.Debug} {
+				for _, logF := range []func(string){l.Fatal, l.Error, l.Info, l.Warn, l.Debug} {
 					tw.Reset()
-					logF("%s", test.str)
+					logF(test.str)
 					lstr := tw.Get()
 					parts := strings.SplitN(lstr, " ", 2)
 					assert.Equal(t, test.res, strings.Trim(parts[1], colorlog.TextReset+"\n"))
@@ -90,10 +96,41 @@ func Test_Mask(t *testing.T) {
 	}
 }
 
-func TestLog2(t *testing.T) {
-	colorlog.Fatal("Fatal message")
-	colorlog.Error("Error message")
-	colorlog.Warn("Warning message")
-	colorlog.Info("Info message")
-	colorlog.Debug("Debug message")
+func TestLogMessage(t *testing.T) {
+	t.Parallel()
+	tw := &testWriter{}
+	var l = colorlog.New().WithOut(tw).WithErr(tw).WithDefaultDarkConfig()
+	l.Fatal("Fatal message")
+	l.Error("Error message")
+	l.Warn("Warning message")
+	l.Info("Info message")
+	l.Debug("Debug message")
+	logStr := tw.Get()
+	expected := "\u001B[1m\u001B[96m\n2000-01-01\u001B[0m\n\u001B[96m00:00:00\u001B[0m\u001B[1m\u001B[3m\u001B[95m Fatal message\u001B[0m\n\u001B[96m00:00:00\u001B[0m\u001B[1m\u001B[91m Error message\u001B[0m\n\u001B[96m00:00:00\u001B[0m\u001B[1m\u001B[93m Warning message\u001B[0m\n\u001B[96m00:00:00\u001B[0m\u001B[92m Info message\u001B[0m\n\u001B[96m00:00:00\u001B[0m\u001B[37m Debug message\u001B[0m\n"
+	logStr = regDate.ReplaceAllString(logStr, "2000-01-01")
+	logStr = regTime.ReplaceAllString(logStr, "00:00:00")
+
+	assert.Equal(t, expected, logStr)
+}
+
+func TestLogFormattedMessage(t *testing.T) {
+	t.Parallel()
+	tw := &testWriter{}
+	var l = colorlog.New().WithOut(tw).WithErr(tw).WithDefaultLightConfig()
+
+	l.Fatalf("%d Fatal %s message", 1, "formatting")
+	l.Errorf("Error (%d) %s", 2, "message")
+	l.Warnf("Warning message: %d %v", 3, struct {
+		field1 string
+		field2 int
+	}{field1: "field1", field2: 2})
+	l.Infof("%d. %s %s", 4, "Info", "message")
+	l.Debugf("Debug message without formatting")
+
+	logStr := tw.Get()
+	expected := "\u001B[1m\u001B[36m\n2000-01-01\u001B[0m\n\u001B[36m00:00:00\u001B[0m\u001B[1m\u001B[3m\u001B[95m 1 Fatal formatting message\u001B[0m\n\u001B[36m00:00:00\u001B[0m\u001B[1m\u001B[91m Error (2) message\u001B[0m\n\u001B[36m00:00:00\u001B[0m\u001B[1m\u001B[33m Warning message: 3 {field1 2}\u001B[0m\n\u001B[36m00:00:00\u001B[0m\u001B[32m 4. Info message\u001B[0m\n\u001B[36m00:00:00\u001B[0m\u001B[37m Debug message without formatting\u001B[0m\n"
+	logStr = regDate.ReplaceAllString(logStr, "2000-01-01")
+	logStr = regTime.ReplaceAllString(logStr, "00:00:00")
+
+	assert.Equal(t, expected, logStr)
 }

@@ -155,28 +155,44 @@ func (c *ColorLog) write(iow io.Writer, text string, dblW io.Writer) {
 	}
 }
 
-func (c *ColorLog) Fatal(text string, args ...any) {
-	c.l(false, fmt.Sprintf(text, args...), c.cfg.Fatal)
+func (c *ColorLog) Fatal(text string) {
+	c.l(false, text, c.cfg.Fatal)
 }
 
-func (c *ColorLog) Error(text string, args ...any) {
-	c.l(false, fmt.Sprintf(text, args...), c.cfg.Error)
+func (c *ColorLog) Fatalf(format string, args ...any) {
+	c.Fatal(fmt.Sprintf(format, args...))
 }
 
-func (c *ColorLog) Warn(text string, args ...any) {
-	c.l(true, fmt.Sprintf(text, args...), c.cfg.Warn)
+func (c *ColorLog) Error(text string) {
+	c.l(false, text, c.cfg.Error)
 }
 
-func (c *ColorLog) Info(text string, args ...any) {
-	c.l(true, fmt.Sprintf(text, args...), c.cfg.Info)
+func (c *ColorLog) Errorf(format string, args ...any) {
+	c.Error(fmt.Sprintf(format, args...))
 }
 
-func (c *ColorLog) Debug(text string, args ...any) {
-	c.l(true, fmt.Sprintf(text, args...), c.cfg.Debug)
+func (c *ColorLog) Warn(text string) {
+	c.l(true, text, c.cfg.Warn)
 }
 
-func Fatal(text string, args ...any) {
-	defaultLog.Fatal(text, args...)
+func (c *ColorLog) Warnf(format string, args ...any) {
+	c.Warn(fmt.Sprintf(format, args...))
+}
+
+func (c *ColorLog) Info(text string) {
+	c.l(true, text, c.cfg.Info)
+}
+
+func (c *ColorLog) Infof(format string, args ...any) {
+	c.Info(fmt.Sprintf(format, args...))
+}
+
+func (c *ColorLog) Debug(text string) {
+	c.l(true, text, c.cfg.Debug)
+}
+
+func (c *ColorLog) Debugf(format string, args ...any) {
+	c.Debug(fmt.Sprintf(format, args...))
 }
 
 func (c *ColorLog) WithMask(mask string) *ColorLog {
