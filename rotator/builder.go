@@ -61,6 +61,7 @@ func (b *builder) WithCheckPeriod(checkPeriod time.Duration) *builder {
 }
 
 func (b *builder) Build() *Rotator {
+	b.r.filename = getFilename(b.r.options.Dirname, b.r.options.FilePrefix, b.r.options.Ext, 0)
 	return &b.r
 }
 
