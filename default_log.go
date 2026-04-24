@@ -48,10 +48,6 @@ func WithConfig(cfg *Config) {
 	defaultLog.WithConfig(cfg)
 }
 
-func WithErr(iow io.Writer) {
-	defaultLog.WithErr(iow)
-}
-
 func WithOut(iow io.Writer) {
 	defaultLog.WithOut(iow)
 }

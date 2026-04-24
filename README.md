@@ -9,9 +9,9 @@
 
 Простое использование
 ```go
-colorlog.Debug("Debug message %d", 1)
-colorlog.Info("Info message %s", "2")
-colorlog.Warn("Warning message %s", "2")
+colorlog.Debugf("Debug message %d", 1)
+colorlog.Infof("Info message %s", "2")
+colorlog.Warnf("Warning message %s", "2")
 colorlog.Error("Error message")
 colorlog.Fatal("Fatal message")
 ```
@@ -20,14 +20,12 @@ colorlog.Fatal("Fatal message")
 
 Вывод лога в файл
 ```go
-errLog, _ := os.OpenFile("error.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 outLog, _ := os.OpenFile("out.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-colorlog.WithErr(errLog)
 colorlog.WithOut(outLog)
 
-colorlog.Debug("Debug message %d", 1)
-colorlog.Info("Info message %s", "2")
-colorlog.Warn("Warning message %s", "2")
+colorlog.Debugf("Debug message %d", 1)
+colorlog.Infof("Info message %s", "2")
+colorlog.Warnf("Warning message %s", "2")
 colorlog.Error("Error message")
 colorlog.Fatal("Fatal message")
 ```
@@ -36,10 +34,23 @@ colorlog.Fatal("Fatal message")
 
 Дополнительный лог со своими настройками
 ```go
-log := colorlog.New().WithErr(errLog).WithOut(outLog).WithConfig(cfg)
+log := colorlog.New().WithOut(outLog).WithConfig(cfg)
 
 log.Info("Info message")
 log.Debug("Debug message")
 
 colorlog.Info("Info message")
+```
+
+**Пример 4:**
+
+Ротация логов:
+```go
+rot := rotator.NewBuilder().
+	WithStrategy(rotator.StrategySize).
+	WithSize(1*1024*1024).
+	WithCount(5).
+	Build()
+log := colorlog.New().
+	WithOut(rot)
 ```

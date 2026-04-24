@@ -5,8 +5,10 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/alklimenko/colorlog"
+	"github.com/alklimenko/colorlog/rotator"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -78,7 +80,7 @@ func Test_Mask(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			tw := &testWriter{}
-			var l = colorlog.New().WithOut(tw).WithErr(tw)
+			var l = colorlog.New().WithOut(tw)
 			l.Info("") // date
 			require.NotPanics(t, func() {
 				for _, mask := range test.masks {
@@ -99,7 +101,7 @@ func Test_Mask(t *testing.T) {
 func TestLogMessage(t *testing.T) {
 	t.Parallel()
 	tw := &testWriter{}
-	var l = colorlog.New().WithOut(tw).WithErr(tw).WithDefaultDarkConfig()
+	var l = colorlog.New().WithOut(tw).WithDefaultDarkConfig()
 	l.Fatal("Fatal message")
 	l.Error("Error message")
 	l.Warn("Warning message")
@@ -116,7 +118,7 @@ func TestLogMessage(t *testing.T) {
 func TestLogFormattedMessage(t *testing.T) {
 	t.Parallel()
 	tw := &testWriter{}
-	var l = colorlog.New().WithOut(tw).WithErr(tw).WithDefaultLightConfig()
+	var l = colorlog.New().WithOut(tw).WithDefaultLightConfig()
 
 	l.Fatalf("%d Fatal %s message", 1, "formatting")
 	l.Errorf("Error (%d) %s", 2, "message")
@@ -133,4 +135,21 @@ func TestLogFormattedMessage(t *testing.T) {
 	logStr = regTime.ReplaceAllString(logStr, "00:00:00")
 
 	assert.Equal(t, expected, logStr)
+}
+
+func TestRotator(t *testing.T) {
+	t.Parallel()
+	rot := rotator.NewBuilder().
+		WithStrategy(rotator.StrategySize).
+		WithSize(100).
+		WithCount(5).
+		WithCheckPeriod(time.Millisecond).
+		Build()
+	log := colorlog.New().
+		WithOut(rot)
+
+	for i := 0; i < 500; i++ {
+		log.Info("Info message")
+		time.Sleep(time.Millisecond)
+	}
 }

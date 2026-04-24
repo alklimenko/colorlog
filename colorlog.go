@@ -32,8 +32,7 @@ const (
 )
 
 type ColorLog struct {
-	errW  io.Writer
-	outW  io.Writer
+	out   io.Writer
 	cfg   *Config
 	date  time.Time
 	masks []string
@@ -74,26 +73,16 @@ var (
 
 func New() *ColorLog {
 	return &ColorLog{
-		cfg:  &defaultDarkConfig,
-		errW: os.Stderr,
-		outW: os.Stdout,
+		cfg: &defaultDarkConfig,
+		out: os.Stdout,
 	}
-}
-
-func (c *ColorLog) WithErr(iow io.Writer) *ColorLog {
-	if iow == nil {
-		c.errW = os.Stderr
-	} else {
-		c.errW = iow
-	}
-	return c
 }
 
 func (c *ColorLog) WithOut(iow io.Writer) *ColorLog {
 	if iow == nil {
-		c.errW = os.Stderr
+		c.out = os.Stderr
 	} else {
-		c.outW = iow
+		c.out = iow
 	}
 	return c
 }
@@ -115,7 +104,7 @@ func (c *ColorLog) WithDefaultLightConfig() *ColorLog {
 	return c
 }
 
-func (c *ColorLog) l(isOut bool, text string, styles ...string) {
+func (c *ColorLog) l(text string, styles ...string) {
 	t := time.Now()
 	d := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 	sb := strings.Builder{}
@@ -138,11 +127,7 @@ func (c *ColorLog) l(isOut bool, text string, styles ...string) {
 	sb.WriteString(TextReset)
 	sb.WriteString("\n")
 	s := sb.String()
-	if isOut {
-		c.write(c.outW, s, os.Stdout)
-	} else {
-		c.write(c.errW, s, os.Stderr)
-	}
+	c.write(c.out, s, os.Stdout)
 }
 
 func (c *ColorLog) write(iow io.Writer, text string, dblW io.Writer) {
@@ -156,7 +141,7 @@ func (c *ColorLog) write(iow io.Writer, text string, dblW io.Writer) {
 }
 
 func (c *ColorLog) Fatal(text string) {
-	c.l(false, text, c.cfg.Fatal)
+	c.l(text, c.cfg.Fatal)
 }
 
 func (c *ColorLog) Fatalf(format string, args ...any) {
@@ -164,7 +149,7 @@ func (c *ColorLog) Fatalf(format string, args ...any) {
 }
 
 func (c *ColorLog) Error(text string) {
-	c.l(false, text, c.cfg.Error)
+	c.l(text, c.cfg.Error)
 }
 
 func (c *ColorLog) Errorf(format string, args ...any) {
@@ -172,7 +157,7 @@ func (c *ColorLog) Errorf(format string, args ...any) {
 }
 
 func (c *ColorLog) Warn(text string) {
-	c.l(true, text, c.cfg.Warn)
+	c.l(text, c.cfg.Warn)
 }
 
 func (c *ColorLog) Warnf(format string, args ...any) {
@@ -180,7 +165,7 @@ func (c *ColorLog) Warnf(format string, args ...any) {
 }
 
 func (c *ColorLog) Info(text string) {
-	c.l(true, text, c.cfg.Info)
+	c.l(text, c.cfg.Info)
 }
 
 func (c *ColorLog) Infof(format string, args ...any) {
@@ -188,7 +173,7 @@ func (c *ColorLog) Infof(format string, args ...any) {
 }
 
 func (c *ColorLog) Debug(text string) {
-	c.l(true, text, c.cfg.Debug)
+	c.l(text, c.cfg.Debug)
 }
 
 func (c *ColorLog) Debugf(format string, args ...any) {
