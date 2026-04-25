@@ -1,24 +1,47 @@
 package rotator
 
 import (
-	"fmt"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_GetNext(t *testing.T) {
 	t.Parallel()
-	wd, _ := os.Getwd()
-	wd = filepath.Join(wd, "logs")
-	f, e := getNext(wd, "log_", "log", 3)
-	if e != nil {
-		t.Error(e)
+	prefix := "log_getnext_"
+	ext := ".txt"
+	delLogs(prefix)
+	defer delLogs(prefix)
+
+	// unique, non ordered rand ints
+	nums := make([]int, 10)
+	for i := range nums {
+		nums[i] = rand.Intn(100)*10 + i
 	}
-	println(f)
+
+	wd, _ := os.Getwd()
+	for i := 0; i < 10; i++ {
+		filename := getFilename(wd, prefix, ext, nums[i])
+		file, _ := os.Create(filename)
+		_ = file.Close()
+	}
+	fn := filepath.Join(wd, prefix+"00"+ext)
+	for range 7 {
+		f, e := getNext(wd, prefix, ext, 3)
+		require.NoError(t, e)
+		assert.Equal(t, fn, f)
+	}
+	files := getLogFiles(prefix)
+	assert.Equal(t, 2, len(files))
+	assert.Equal(t, []string{prefix + "01" + ext, prefix + "02" + ext}, files)
 }
 
-func Test2(t *testing.T) {
+func Test_getFilename(t *testing.T) {
 	t.Parallel()
-	println(fmt.Sprintf("%04d", 23))
+	filename := getFilename("aaa", "log_getfilename_", ".logfile", 14)
+	assert.Equal(t, "aaa/log_getfilename_14.logfile", filename)
 }

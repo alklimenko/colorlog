@@ -61,7 +61,7 @@ func getNext(dirName, namePrefix, ext string, count int) (string, error) {
 	}
 
 	var i int
-	for i = len(logfiles) - 1; i >= count; i-- {
+	for i = len(logfiles) - 1; i >= count-1; i-- {
 		_ = os.Remove(filepath.Join(dirName, logfiles[i]))
 	}
 

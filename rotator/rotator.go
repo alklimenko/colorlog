@@ -38,9 +38,17 @@ type Rotator struct {
 
 func (r *Rotator) Write(p []byte) (n int, err error) {
 	if r.out == nil {
-		r.out, err = os.Create(r.filename)
-		if err != nil {
-			return 0, err
+		_, err = os.Stat(r.filename)
+		if os.IsNotExist(err) {
+			r.out, err = os.Create(r.filename)
+			if err != nil {
+				return 0, err
+			}
+		} else {
+			r.out, err = os.OpenFile(r.filename, os.O_WRONLY|os.O_APPEND, 0666)
+			if err != nil {
+				return 0, err
+			}
 		}
 	}
 	r.check()
