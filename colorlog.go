@@ -52,7 +52,7 @@ type Config struct {
 
 var (
 	defaultDarkConfig = Config{
-		Date:  TextBold + TextLightCyan,
+		Date:  TextBold + TextLightBlue,
 		Time:  TextLightCyan,
 		Fatal: TextBold + TextItalic + TextLightMagenta,
 		Error: TextBold + TextLightRed,
@@ -84,6 +84,7 @@ func (c *ColorLog) WithOut(iow io.Writer) *ColorLog {
 	} else {
 		c.out = iow
 	}
+	c.date = time.Now().Add(-time.Hour * 24)
 	return c
 }
 
@@ -91,6 +92,11 @@ func (c *ColorLog) WithConfig(cfg *Config) *ColorLog {
 	if cfg != nil {
 		c.cfg = cfg
 	}
+	return c
+}
+
+func (c *ColorLog) WithDoubleLogInStd(double bool) *ColorLog {
+	c.cfg.DoubleLogInStd = double
 	return c
 }
 
@@ -111,7 +117,7 @@ func (c *ColorLog) l(text string, styles ...string) {
 
 	if d != c.date {
 		c.date = d
-		sb.WriteString(c.cfg.Date + "\n")
+		sb.WriteString("\n" + c.cfg.Date)
 		sb.WriteString(c.date.Format(time.DateOnly))
 		sb.WriteString(TextReset + "\n")
 	}

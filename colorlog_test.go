@@ -101,14 +101,14 @@ func Test_Mask(t *testing.T) {
 func TestLogMessage(t *testing.T) {
 	t.Parallel()
 	tw := &testWriter{}
-	var l = colorlog.New().WithOut(tw).WithDefaultDarkConfig()
+	var l = colorlog.New().WithDefaultDarkConfig().WithDoubleLogInStd(true).WithOut(tw)
 	l.Fatal("Fatal message")
 	l.Error("Error message")
 	l.Warn("Warning message")
 	l.Info("Info message")
 	l.Debug("Debug message")
 	logStr := tw.Get()
-	expected := "\u001B[1m\u001B[96m\n2000-01-01\u001B[0m\n\u001B[96m00:00:00\u001B[0m\u001B[1m\u001B[3m\u001B[95m Fatal message\u001B[0m\n\u001B[96m00:00:00\u001B[0m\u001B[1m\u001B[91m Error message\u001B[0m\n\u001B[96m00:00:00\u001B[0m\u001B[1m\u001B[93m Warning message\u001B[0m\n\u001B[96m00:00:00\u001B[0m\u001B[92m Info message\u001B[0m\n\u001B[96m00:00:00\u001B[0m\u001B[37m Debug message\u001B[0m\n"
+	expected := "\n\u001B[1m\u001B[94m2000-01-01\u001B[0m\n\u001B[96m00:00:00\u001B[0m\u001B[1m\u001B[3m\u001B[95m Fatal message\u001B[0m\n\u001B[96m00:00:00\u001B[0m\u001B[1m\u001B[91m Error message\u001B[0m\n\u001B[96m00:00:00\u001B[0m\u001B[1m\u001B[93m Warning message\u001B[0m\n\u001B[96m00:00:00\u001B[0m\u001B[92m Info message\u001B[0m\n\u001B[96m00:00:00\u001B[0m\u001B[37m Debug message\u001B[0m\n"
 	logStr = regDate.ReplaceAllString(logStr, "2000-01-01")
 	logStr = regTime.ReplaceAllString(logStr, "00:00:00")
 
