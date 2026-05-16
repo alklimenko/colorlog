@@ -31,6 +31,16 @@ const (
 	TextBlink        = "\033[5m"
 )
 
+type LogLevel int
+
+const (
+	LogLevelDebug LogLevel = iota
+	LogLevelInfo  LogLevel = iota
+	LogLevelWarn  LogLevel = iota
+	LogLevelError LogLevel = iota
+	LogLevelFatal LogLevel = iota
+)
+
 type ColorLog struct {
 	out   io.Writer
 	cfg   *Config
@@ -48,6 +58,7 @@ type Config struct {
 	Info           string
 	Debug          string
 	DoubleLogInStd bool
+	LogLevel       LogLevel
 }
 
 var (
@@ -97,6 +108,11 @@ func (c *ColorLog) WithConfig(cfg *Config) *ColorLog {
 
 func (c *ColorLog) WithDoubleLogInStd(double bool) *ColorLog {
 	c.cfg.DoubleLogInStd = double
+	return c
+}
+
+func (c *ColorLog) WithLogLevel(level LogLevel) *ColorLog {
+	c.cfg.LogLevel = level
 	return c
 }
 
@@ -155,34 +171,58 @@ func (c *ColorLog) Fatalf(format string, args ...any) {
 }
 
 func (c *ColorLog) Error(text string) {
+	if c.cfg.LogLevel > LogLevelError {
+		return
+	}
 	c.l(text, c.cfg.Error)
 }
 
 func (c *ColorLog) Errorf(format string, args ...any) {
+	if c.cfg.LogLevel > LogLevelError {
+		return
+	}
 	c.Error(fmt.Sprintf(format, args...))
 }
 
 func (c *ColorLog) Warn(text string) {
+	if c.cfg.LogLevel > LogLevelWarn {
+		return
+	}
 	c.l(text, c.cfg.Warn)
 }
 
 func (c *ColorLog) Warnf(format string, args ...any) {
+	if c.cfg.LogLevel > LogLevelWarn {
+		return
+	}
 	c.Warn(fmt.Sprintf(format, args...))
 }
 
 func (c *ColorLog) Info(text string) {
+	if c.cfg.LogLevel > LogLevelInfo {
+		return
+	}
 	c.l(text, c.cfg.Info)
 }
 
 func (c *ColorLog) Infof(format string, args ...any) {
+	if c.cfg.LogLevel > LogLevelInfo {
+		return
+	}
 	c.Info(fmt.Sprintf(format, args...))
 }
 
 func (c *ColorLog) Debug(text string) {
+	if c.cfg.LogLevel > LogLevelDebug {
+		return
+	}
 	c.l(text, c.cfg.Debug)
 }
 
 func (c *ColorLog) Debugf(format string, args ...any) {
+	if c.cfg.LogLevel > LogLevelDebug {
+		return
+	}
 	c.Debug(fmt.Sprintf(format, args...))
 }
 
